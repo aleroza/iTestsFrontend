@@ -1,4 +1,4 @@
-import {getTestData} from "../backend-api";
+import {getTestData, sendScore, subAttempt} from "../backend-api";
 import React, {useEffect, useState} from "react";
 import {
     Alert,
@@ -22,7 +22,8 @@ import router from "../router";
 
 const Testing = ({id, sharedState}) => {
     const deb = () => {
-        debugger;
+        console.log(testData)
+        // debugger;
     }
 
     const [testData, setTestData] = useState({})
@@ -33,17 +34,23 @@ const Testing = ({id, sharedState}) => {
     const {viewWidth} = useAdaptivity();
     const isDesktop = viewWidth >= ViewWidth.SMALL_TABLET;
 
+
     useEffect(() => {
-        //TODO Запрос на вычитание колва попыток
-        console.log(testID, router.getState().params.firstRun)
-        setScore(0)
         sharedState.setPopout(<ScreenSpinner size='large'/>)
-        fetchTestData().then(() => sharedState.setPopout(null))
-        console.log(testData)
 
         history.pushState(null, null, location.href)
         window.addEventListener('popstate', preventLeaving)
         window.addEventListener('beforeunload', preventLeaving)
+        setScore(0)
+
+        //FIXME Может стоит объединить subAttempt и getTestData?..
+        // стоит, нужна логика проверки, нужно ли обновлять результат теста
+        //console.log(testID, router.getState().params.firstRun)
+        subAttempt(testID, sharedState.loginType.user.id, router.getState().params.firstRun)
+        fetchTestData().then(() => sharedState.setPopout(null))
+        console.log(testData)
+
+        //console.log(testData)
         return () => {
             window.removeEventListener('popstate', preventLeaving);
             window.removeEventListener('beforeunload', preventLeaving);
@@ -52,9 +59,8 @@ const Testing = ({id, sharedState}) => {
     }, [])
 
     const fetchTestData = async () => {
-        if (Object.keys(testData).length === 0) {
-            getTestData(testID).then(res => setTestData(res))
-        }
+        getTestData(testID, sharedState.loginType.user.id).then(res => setTestData(res))
+
     }
 
     const preventLeaving = (e) => {
@@ -72,7 +78,7 @@ const Testing = ({id, sharedState}) => {
          */
         /*
         FIXME
-         Лол, а эта хрень вообще работает в приложении?
+         обрабатывать нажатие на крестик в мобильном приложении
          */
 
     }
@@ -145,7 +151,7 @@ const Testing = ({id, sharedState}) => {
             return (
                 <Group style={isDesktop ? {width: '80%', marginLeft: 'auto', marginRight: "auto"} : {}}>
 
-                    <Title weight='regular' level='1'>{question.title}</Title>
+                    <Title weight='regular' level='1'>{question.question}</Title>
                     <FormLayout onSubmit={e => {
                         checkAnswer(e)
                     }}>
@@ -173,7 +179,8 @@ const Testing = ({id, sharedState}) => {
             )
 
         } else {
-            //TODO отправка результатов теста на сервер
+            //TODO сделать обработку неотправки результата теста через попап с просьбой скопировать айди операции через девтулсы и скинуть мне
+            sendScore(testID, sharedState.loginType.user.id, score, sharedState.security)
             document.getElementsByClassName('vkuiPanel__in Panel__in').item(0).style.height = '100%'
             return (
                 <div style={{
@@ -211,8 +218,9 @@ const Testing = ({id, sharedState}) => {
 
     return (
         <Panel id={id}>
-            <PanelHeader onClick={() => console.log(viewWidth, ViewWidth.TABLET, isDesktop)}
-                         left={<PanelHeaderClose onClick={finishStatus ? () => router.go('home') : openExitAlert}/>}
+            <PanelHeader
+                onClick={() => deb()}
+                left={<PanelHeaderClose onClick={finishStatus ? () => router.go('home') : openExitAlert}/>}
             >
                 {testData.title}
             </PanelHeader>

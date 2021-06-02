@@ -8,11 +8,16 @@ const routes = [
         updateUrl: false,
         children: [
             {name: 'persik'},
-            {name: 'preview_page', subRoute: true}
+            {name: 'preview_modal', subRoute: true},
+            {name: 'testing'},
+            {
+                name:'admin',
+                children: [
+                    {name: 'settings_modal', subRoute: true},
+                    {name: 'create-update'}
+                ]
+            }
         ]
-    },
-    {
-        name: 'testing'
     }
 ]
 
