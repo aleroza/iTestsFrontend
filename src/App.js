@@ -1,14 +1,15 @@
 import React, {useEffect, useState,} from 'react'
 
 import {
-    Div,
     AdaptivityProvider,
     AppRoot,
-    Avatar, Badge,
+    Avatar,
+    Badge,
     Button,
     Card,
     ConfigProvider,
     ContentCard,
+    Div,
     FormItem,
     FormLayout,
     Group,
@@ -16,7 +17,6 @@ import {
     ModalPage,
     ModalPageHeader,
     ModalRoot,
-    PanelHeaderSubmit,
     ScreenSpinner,
     Separator,
     SimpleCell,
@@ -25,7 +25,7 @@ import {
     View,
 } from '@vkontakte/vkui'
 
-import {Icon16Done, Icon24DoorArrowLeftOutline, Icon24Linked,} from '@vkontakte/icons'
+import {Icon16Done, Icon24DoorArrowLeftOutline,} from '@vkontakte/icons'
 
 import bridge from '@vkontakte/vk-bridge'
 
@@ -34,9 +34,9 @@ import router from './router'
 import Home from "./panels/Home";
 import Testing from "./panels/Testing";
 import Admin from "./panels/Admin";
-import {element} from "prop-types";
 import axios from "axios";
 import {createTest, updateTest} from "./backend-api";
+import QuestionsAndStuff from "./panels/QuestionsAndStuff";
 
 function App() {
     const [scheme, setScheme] = useState(null)
@@ -50,7 +50,7 @@ function App() {
     const [urlParams, setUrlParams] = useState({})
     const [loginType, setLoginType] = useState({})
     let security = {}
-    //Сделать через конст, ибо ререндер убивает
+    //Сделать через конст, ибо ререндер убивает наверное
 
     //For settings modal
     const [newTest, setNewTest] = useState({})
@@ -156,24 +156,26 @@ function App() {
     }
 
     //Checking validation checks
-    useEffect(() =>{
-        let validationRes = Array.from(document.getElementsByClassName('validateMe')).map(element=> element.classList.contains('FormItem--valid'))
+    useEffect(() => {
+        let validationRes = Array.from(document.getElementsByClassName('validateMe')).map(element => !element.classList.contains('FormItem--error'))
         if (document.getElementById('validateImg')) validationRes.push(!(document.getElementById('validateImg').classList.contains('imagePending')))
         validationRes.push(!(JSON.stringify(newTest) === JSON.stringify(prevTest)))
-        if (!validationRes.every(Boolean)){
+        if (!validationRes.every(Boolean)) {
             setSaveBadge(null)
         } else {
             setSaveBadge(<Badge mode="prominent"/>)
         }
-    },[newTest, imageValid])
-
+    }, [newTest, prevTest, imageValid])
 
 
 //TODO Отделить логику модалок от App
     const modal = (
         <ModalRoot
             activeModal={activeModal}
-            onClose={router.back}
+            onClose={() => {
+                // console.log(router.history)
+                router.closeModal({cutHistory: true})
+            }}
         >
             <ModalPage
                 id="preview_modal"
@@ -194,14 +196,14 @@ function App() {
                                     <div>
                                         {`${test.numberOfQuestions} ${declOfNum(test.numberOfQuestions, ['вопрос', 'вопроса', 'вопросов'])}`}
                                         <br/>
-                                        {attemptsLeft < 0 ? "" : `${attemptsLeft} ${declOfNum(attemptsLeft, ['попытка', 'попытки', 'попыток'])}`}
+                                        {test.numberOfAttempts !== -1 ? attemptsLeft < 0 ? "" : `${attemptsLeft} ${declOfNum(attemptsLeft, ['попытка', 'попытки', 'попыток'])}` : null}
                                     </div>
                                     <div>
                                         {/*FIXME Кнопки съезжают при экстра-маленькой ширине экрана*/}
                                         <Button
                                             mode="secondary"
                                             size="l"
-                                            disabled={attemptsLeft === 0}
+                                            disabled={test.numberOfAttempts !== -1 && attemptsLeft === 0}
                                             before={<Icon24DoorArrowLeftOutline/>}
                                             onClick={() => {
                                                 router.go('testing', {
@@ -210,21 +212,21 @@ function App() {
                                                 })
                                             }}
                                         >Пройти тест</Button>
-                                        <Button
-                                            style={{marginLeft: '10px'}}
-                                            mode="secondary"
-                                            size="l"
-                                            before={<Icon24Linked/>}
-                                            onClick={() => {
-                                                //TODO копирование ссылки https://github.com/VKCOM/vk-router#buildurl
-                                                // отдельные кнопки на копирование и поделиться? или нафиг во
-                                                // bridge.send("VKWebAppShare", {"link": "https://vk.com/app6909581#hello"}).then(() => {
-                                                bridge.send("VKWebAppCopyText", {"text": "Этот текст будет скопирован в буфер обмена."}).then(() => {
-                                                    router.back()
-                                                    openSnackbar()
-                                                })
-                                            }}
-                                        />
+                                        {/*<Button*/}
+                                        {/*    style={{marginLeft: '10px'}}*/}
+                                        {/*    mode="secondary"*/}
+                                        {/*    size="l"*/}
+                                        {/*    before={<Icon24Linked/>}*/}
+                                        {/*    onClick={() => {*/}
+                                        {/*        //TODO копирование ссылки https://github.com/VKCOM/vk-router#buildurl*/}
+                                        {/*        // отдельные кнопки на копирование и поделиться? или нафиг во*/}
+                                        {/*        // bridge.send("VKWebAppShare", {"link": "https://vk.com/app6909581#hello"}).then(() => {*/}
+                                        {/*        bridge.send("VKWebAppCopyText", {"text": "Этот текст будет скопирован в буфер обмена."}).then(() => {*/}
+                                        {/*            router.closeModal({cutHistory:true})*/}
+                                        {/*            openSnackbar("Ссылка скопирована!")*/}
+                                        {/*        })*/}
+                                        {/*    }}*/}
+                                        {/*/>*/}
                                     </div>
 
                                 </div>
@@ -235,22 +237,26 @@ function App() {
 
             <ModalPage
                 id="settings_modal"
+
                 header={
                     <ModalPageHeader
-                        // right={<PanelHeaderSubmit onClick={router.back}>Сохранить</PanelHeaderSubmit>}
-                            right={<Button disabled={saveBadge===null} mode='tertiary' before={saveBadge}
-                            onClick={()=>{
-                                if(newTest._id===undefined){
-                                    createTest(newTest, sharedState.security).then(()=>{
-                                        sharedState.openSnackbar('Тест добавлен!')})
-                                }else {
-                                    updateTest(newTest, sharedState.security).then(()=>{
-                                        sharedState.openSnackbar('Тест изменен!')})
-                                }
-                                router.back()
-                            }}
-                            >
-                                Сохранить</Button>}
+                        // onClick={()=>console.log(router.getHistory())}
+                        right={<Button disabled={saveBadge === null} mode='tertiary' before={saveBadge}
+                                       onClick={() => {
+                                           if (newTest._id === undefined) {
+                                               createTest(newTest, security).then(() => {
+                                                   router.closeModal({cutHistory: true})
+                                                   openSnackbar('Тест добавлен!')
+                                               })
+                                           } else {
+                                               updateTest(newTest, security).then(() => {
+                                                   setPrevTest(newTest)
+                                                   openSnackbar('Тест изменен!')
+                                               })
+                                           }
+                                       }}
+                        >
+                            Сохранить</Button>}
                     >
                         Настройки теста
                     </ModalPageHeader>
@@ -266,7 +272,11 @@ function App() {
                         <Group>
                             {/*TODO подумать над смишнявым текстом плейсхолдеров*/}
                             <Div>
-                                <Button size='m' stretched>Вопросы, ответы и результаты</Button>
+                                <Button mode='secondary' disabled={newTest._id === undefined} size='m' stretched
+                                        onClick={() =>
+                                            router.go('questions_and_stuff')
+                                        }
+                                >Вопросы и результаты</Button>
                             </Div>
                             <FormLayout
                                 id="form"
@@ -276,32 +286,30 @@ function App() {
                                     <Input disabled defaultValue={newTest._id || 'Создание нового теста'}/>
                                 </FormItem>
 
-                                <FormItem className='validateMe' status={newTest.title ? 'valid' : 'error'} top="Название">
+                                <FormItem className='validateMe' status={newTest.title ? '' : 'error'} top="Название">
                                     <Input
                                         onChange={(e) => {
                                             //TODO Вынести изменение стейта в одну функцию, как здесь https://vkcom.github.io/VKUI/#formitem
                                             setNewTest({...newTest, title: e.target.value.trim()})
-                                            
+
                                         }} defaultValue={newTest.title}
-                                           placeholder={""}/>
+                                        placeholder={""}/>
                                 </FormItem>
 
-                                <FormItem className='validateMe' status={newTest.description ? 'valid' : 'error'} top="Описание">
+                                <FormItem className='validateMe' status={newTest.description ? '' : 'error'}
+                                          top="Описание">
                                     <Input onChange={(e) => {
                                         setNewTest({...newTest, description: e.target.value.trim()})
-                                        
+
                                     }}
                                            defaultValue={newTest.description} placeholder={""}/>
                                 </FormItem>
 
                                 <FormItem className='validateMe' id='validateImg' top="Обложка"
-                                status={newTest.image && imageValid ? 'valid':'error'}
+                                          status={newTest.image && imageValid ? '' : 'error'}
                                 >
                                     {/*TODO Придумать, как сделать инпут справа от картинки без схлопывания оной*/}
-                                    <Card
-                                        onClick={()=>{
-                                        console.log()
-                                    }}>
+                                    <Card>
                                         <div id="testImg" style={{
                                             height: 129,
                                             backgroundRepeat: 'no-repeat',
@@ -314,19 +322,24 @@ function App() {
                                     </Card>
                                     <Input
                                         style={{marginTop: '8px'}} defaultValue={newTest.image} placeholder={""}
-                                           onChange={(e) => {
-                                               //For Mixed-Content
-                                               const link = e.target.value.trim().replace('http://', 'https://')
-                                               document.getElementById('validateImg').classList.add("imagePending");
-                                               document.getElementById("testImg").style.backgroundImage = `url("${link}")`
-                                               setNewTest({...newTest, image: link})
-                                               //TODO сделать репитер на бэке для обхода CORS https://github.com/axios/axios/issues/853
-                                               // либо натыкать курл
-                                               axios.head(link)
-                                                   .then((res)=>res.status===200 ? setImageValid(true):setImageValid(false))
-                                                   .catch((res)=>setImageValid(false))
-                                                   .finally(()=>document.getElementById('validateImg').classList.remove("imagePending"))
-                                           }}/>
+                                        onChange={(e) => {
+                                            //For Mixed-Content
+                                            const link = e.target.value.trim().replace('http://', 'https://')
+                                            document.getElementById('validateImg').classList.add("imagePending");
+                                            document.getElementById("testImg").style.backgroundImage = `url("${link}")`
+                                            //TODO сделать репитер на бэке для обхода CORS https://github.com/axios/axios/issues/853
+                                            // либо натыкать курл
+                                            axios.head(link)
+                                                .then((res) => {
+                                                        if (res.status === 200) {
+                                                            setImageValid(true)
+                                                            setNewTest({...newTest, image: link})
+                                                        } else setImageValid(false)
+                                                    }
+                                                )
+                                                .catch((res) => setImageValid(false))
+                                                .finally(() => document.getElementById('validateImg').classList.remove("imagePending"))
+                                        }}/>
                                 </FormItem>
 
                                 <FormItem top="Количество попыток" bottom={"-1 — неограниченные попытки"}>
@@ -337,29 +350,35 @@ function App() {
                                            defaultValue={newTest.numberOfAttempts || -1} placeholder={""}/>
                                 </FormItem>
 
-                                <SimpleCell onClick={(e) => {
-                                    if (e.isTrusted && ["[object HTMLHeadingElement]","[object HTMLInputElement]", "[object HTMLDivElement]"].includes(e.target.toString())) {
-                                        document.getElementById('isActiveSwitch').click()
-                                        setNewTest({...newTest, isActive: !newTest.isActive})
-                                        
+                                <SimpleCell
+                                    onClick={(e) => {
+                                        if (e.isTrusted && ["[object HTMLHeadingElement]", "[object HTMLInputElement]", "[object HTMLDivElement]"].includes(e.target.toString())) {
+                                            if (newTest.numberOfQuestions === 0) {
+                                                openSnackbar("Прежде чем открывать тест, сохраните его и добавьте вопросы")
+                                            } else {
+                                                document.getElementById('isActiveSwitch').click()
+                                                setNewTest({...newTest, isActive: !newTest.isActive})
+                                            }
+
+                                        }
                                     }
-                                }
-                                } after={<Switch id='isActiveSwitch' defaultChecked={newTest.isActive}/>}>Тест
+                                    } after={<Switch id='isActiveSwitch' defaultChecked={newTest.isActive}/>}>Тест
                                     открыт?</SimpleCell>
 
-                                <SimpleCell onClick={(e) => {
-                                    if (e.isTrusted && ["[object HTMLHeadingElement]","[object HTMLInputElement]", "[object HTMLDivElement]"].includes(e.target.toString())) {
-                                        document.getElementById('showAnswersSwitch').click()
-                                        setNewTest({...newTest, showAnswers: !newTest.showAnswers})
-                                        
-                                    }
-                                }} after={<Switch id='showAnswersSwitch' defaultChecked={newTest.showAnswers}/>}>Показывать
-                                    правильный вариант?</SimpleCell>
+                                {/*<SimpleCell onClick={(e) => {*/}
+                                {/*    if (e.isTrusted && ["[object HTMLHeadingElement]","[object HTMLInputElement]", "[object HTMLDivElement]"].includes(e.target.toString())) {*/}
+                                {/*        document.getElementById('showAnswersSwitch').click()*/}
+                                {/*        setNewTest({...newTest, showAnswers: !newTest.showAnswers})*/}
+                                {/*        */}
+                                {/*    }*/}
+                                {/*}} after={<Switch id='showAnswersSwitch' defaultChecked={newTest.showAnswers}/>}>Показывать*/}
+                                {/*    правильный вариант?</SimpleCell>*/}
 
 
                                 <Separator/>
 
                             </FormLayout>
+                            {snackbar}
                         </Group>
                     )
                 })() : null}
@@ -373,14 +392,12 @@ function App() {
         urlParams,
         loginType,
         security,
-        activeTest,
-        setActiveTest,
-        activeModal,
-        setActiveModal,
+        activeTest, setActiveTest,
+        activeModal, setActiveModal,
         setPopout,
-        snackbar,
-        openSnackbar,
-        declOfNum
+        snackbar, openSnackbar,
+        declOfNum,
+        newTest, setNewTest
     }
 
     return (
@@ -393,6 +410,7 @@ function App() {
                         <Home id='home' sharedState={sharedState}/>
                         <Testing id='testing' sharedState={sharedState}/>
                         <Admin id='admin' sharedState={sharedState}/>
+                        <QuestionsAndStuff id='questions_and_stuff' sharedState={sharedState}/>
                         {/*TODO Возможность прямого перехода на тест*/}
                         {/*TODO ВОЗМОЖНОСТЬ ПРЯМОГО ПЕРЕХОДА НА СПИСОК ТЕСТОВ КОНКРЕТНОГО ПОЛЬЗОВАТЕЛЯ*/}
                     </View>

@@ -1,8 +1,11 @@
 {
   "name": "itestsfrontend",
   "version": "0.0.1",
-  "private": true,
+  "description": "",
+  "homepage": "./",
+  "main": "src/index.js",
   "devDependencies": {
+    "@vkontakte/vk-miniapps-deploy": "^0.0.25",
     "cross-env": "^7.0.3",
     "eruda": "^2.4.1",
     "eruda-code": "^2.0.0",
@@ -20,11 +23,12 @@
     "@vkontakte/vkjs": "~0.20.0",
     "@vkontakte/vkui": "~4.6.0",
     "axios": "^0.21.1",
-    "pigeon-maps": "^0.19.5",
+    "bson": "^4.4.0",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-time-ago": "^6.2.2"
+    "react-time-ago": "^6.2.2",
+    "xlsx": "^0.17.0"
   },
   "scripts": {
     "start": "cross-env BROWSER=none PORT=3000 HTTPS=true react-scripts start",

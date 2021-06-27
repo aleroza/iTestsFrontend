@@ -1,20 +1,16 @@
-import {
-    createNavigator,
-} from '@vkontakte/router'
+import {createNavigator,} from '@vkontakte/router'
 
 const routes = [
     {
         name: 'home',
         updateUrl: false,
         children: [
-            {name: 'persik'},
             {name: 'preview_modal', subRoute: true},
             {name: 'testing'},
             {
-                name:'admin',
+                name: 'admin',
                 children: [
-                    {name: 'settings_modal', subRoute: true},
-                    {name: 'create-update'}
+                    {name: 'settings_modal', subRoute: true, children: [{name: 'questions_and_stuff'}]}
                 ]
             }
         ]

@@ -6,9 +6,9 @@ import bridge from "@vkontakte/vk-bridge";
 import TimeAgo from 'javascript-time-ago'
 
 import ru from 'javascript-time-ago/locale/ru'
+import App from "./App";
 
 TimeAgo.addDefaultLocale(ru)
-import App from "./App";
 
 // Init VK  Mini App
 bridge.send("VKWebAppInit");

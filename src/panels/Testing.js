@@ -13,7 +13,6 @@ import {
     Radio,
     ScreenSpinner,
     Separator,
-    Text,
     Title,
     useAdaptivity,
     ViewWidth
@@ -22,7 +21,7 @@ import router from "../router";
 
 const Testing = ({id, sharedState}) => {
     const deb = () => {
-        console.log(testData)
+        // console.log(testData)
         // debugger;
     }
 
@@ -48,7 +47,7 @@ const Testing = ({id, sharedState}) => {
         //console.log(testID, router.getState().params.firstRun)
         subAttempt(testID, sharedState.loginType.user.id, router.getState().params.firstRun)
         fetchTestData().then(() => sharedState.setPopout(null))
-        console.log(testData)
+        // console.log(testData)
 
         //console.log(testData)
         return () => {
@@ -151,7 +150,7 @@ const Testing = ({id, sharedState}) => {
             return (
                 <Group style={isDesktop ? {width: '80%', marginLeft: 'auto', marginRight: "auto"} : {}}>
 
-                    <Title weight='regular' level='1'>{question.question}</Title>
+                    <Title style={{margin: '10px'}} weight='regular' level='1'>{question.question}</Title>
                     <FormLayout onSubmit={e => {
                         checkAnswer(e)
                     }}>
@@ -204,7 +203,7 @@ const Testing = ({id, sharedState}) => {
                     }}>
 
                         <Title weight='heavy' level='2'>Ваш результат — {score} из {testData.questions.length}</Title>
-                        <Text weight='regular'>{testData.finals[score]}</Text>
+                        {/*<Text weight='regular'>{testData.finals[score]}</Text>*/}
                         <Button size='l' onClick={() => {
                             router.go('home')
                             router.history = router.history.slice(-1)
@@ -219,7 +218,6 @@ const Testing = ({id, sharedState}) => {
     return (
         <Panel id={id}>
             <PanelHeader
-                onClick={() => deb()}
                 left={<PanelHeaderClose onClick={finishStatus ? () => router.go('home') : openExitAlert}/>}
             >
                 {testData.title}

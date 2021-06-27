@@ -7,19 +7,14 @@ import {
     Group,
     Panel,
     PanelHeader,
-    PanelHeaderClose, Placeholder,
+    PanelHeaderClose,
+    Placeholder,
     Tabs,
     TabsItem
 } from "@vkontakte/vkui";
 import router from "../router";
 import {deleteTest, getTestsListAdmin} from "../backend-api";
-import {
-    Icon28AddOutline,
-    Icon28DeleteOutline,
-    Icon56AddCircleOutline, Icon56HideOutline,
-    Icon56LockOutline,
-    Icon56NotePenOutline
-} from "@vkontakte/icons";
+import {Icon28AddOutline, Icon28DeleteOutline, Icon56AddCircleOutline, Icon56HideOutline} from "@vkontakte/icons";
 import ReactTimeAgo from "react-time-ago";
 
 
@@ -35,7 +30,7 @@ const Admin = ({id, sharedState}) => {
     const [removability, setRemovability] = useState(false)
 
     const fetchTests = async () => {
-        console.log("чекаем список тестов")
+        // console.log("чекаем список тестов")
         let orderedTests = {active: [], closed: []}
         const temp = await getTestsListAdmin(sharedState.loginType.owner.id, sharedState.loginType.owner.isGroup, sharedState.security)
         temp.map((test) => {
@@ -49,7 +44,7 @@ const Admin = ({id, sharedState}) => {
     }
 
     useEffect(() => {
-        if (sharedState.activePanel === 'admin' && sharedState.activeModal===null)
+        if (sharedState.activePanel === 'admin' && sharedState.activeModal === null)
             fetchTests()
                 .then(() => sharedState.setPopout(null))
     }, [sharedState.activePanel, sharedState.activeModal])
@@ -65,7 +60,8 @@ const Admin = ({id, sharedState}) => {
                         deleteTest(testID, sharedState.security).then(() => {
                             sharedState.openSnackbar('Тест удален!')
                             fetchTests()
-                            setRemovability(!removability)
+                            // TODO Сделать так, чтобы removability изменялось после удаления последнего теста в группе
+                            // if(tests[activeTab].length===0) setRemovability(!removability)
                         })
                     },
                 }, {
@@ -80,17 +76,21 @@ const Admin = ({id, sharedState}) => {
         );
     }
 
-    const createNewTest = ()=>{
-        router.go('settings_modal', {test: {
+    const createNewTest = () => {
+        router.go('settings_modal', {
+            test: {
                 ownerID: sharedState.loginType.owner.id,
                 isGroup: sharedState.loginType.owner.isGroup,
                 showAnswers: false,
                 isActive: false,
                 numberOfAttempts: -1,
+                numberOfQuestions: 0,
                 questions: [],
                 finals: [],
                 results: []
-            }})
+            }
+        })
+        setActiveTab('closed')
     }
 
     const testCell = (test) => (
@@ -101,6 +101,7 @@ const Admin = ({id, sharedState}) => {
                 <div>
                     <div>{test.numberOfQuestions} {sharedState.declOfNum(test.numberOfQuestions, ["вопрос", "вопроса", "вопросов"])} | {test.numberOfResults} {sharedState.declOfNum(test.numberOfResults, ["ответ", "ответа", "ответов"])}</div>
                     <div>Создан: {new Date(Date.parse(test.createdAt)).toLocaleString()}</div>
+                    {/*FIXME ЛОЛ, объект же считается обновленным даже после чьего-то прохождения*/}
                     <div>Изменен <ReactTimeAgo date={Date.parse(test.updatedAt)}/></div>
 
                 </div>
@@ -116,9 +117,12 @@ const Admin = ({id, sharedState}) => {
     return (
         <Panel id={id}>
             <PanelHeader
-                onClick={() => deb()}
+                // onClick={() => console.log(tests[activeTab].length===0)}
                 separator={false}
-                left={<PanelHeaderClose onClick={() => router.back()}/>}
+                left={<PanelHeaderClose onClick={() => {
+                    router.back()
+                    router.history.pop()
+                }}/>}
             >
                 Редактирование
             </PanelHeader>
@@ -128,45 +132,45 @@ const Admin = ({id, sharedState}) => {
                         <TabsItem selected={activeTab === 'active'}
                                   onClick={() => setActiveTab('active')}>Активные</TabsItem>
                         <TabsItem selected={activeTab === 'closed'}
-                                  onClick={() => setActiveTab('closed')}>Завершенные</TabsItem>
-                        {removability ? null: <Button
+                                  onClick={() => setActiveTab('closed')}>Закрытые</TabsItem>
+                        {removability ? null : <Button
                             onClick={() => createNewTest()}
                             size='l' mode='tertiary'><Icon28AddOutline/></Button>}
                         {/*FIXME disabled={tests[activeTab].length()===0}*/}
-                        <Button size='l' mode='tertiary'  onClick={() => setRemovability(!removability)}
+                        <Button size='l' mode='tertiary' onClick={() => setRemovability(!removability)}
                                 style={{color: '#E64646'}}> {removability ? "Отменить" :
                             <Icon28DeleteOutline/>}</Button>
                     </Tabs>}
             >
             </Group>
             <Group>
-                {!sharedState.popout ?(() => {
+                {!sharedState.popout ? (() => {
                     if (tests.active)
                         switch (activeTab) {
                             case 'active':
-                                return (tests.active.length === 0?
+                                return (tests.active.length === 0 ?
                                     <Placeholder
-                                        icon={<Icon56AddCircleOutline />}
+                                        icon={<Icon56AddCircleOutline/>}
                                         header="Активных тестов нет"
-                                        action={<Button size='l' onClick={()=> createNewTest()}>Создать тест</Button>}
+                                        action={<Button size='l' onClick={() => createNewTest()}>Создать тест</Button>}
                                     >
                                         Может стоит добавить парочку?
                                     </Placeholder>
-                                    :tests.active.map((test) => testCell(test)));
+                                    : tests.active.map((test) => testCell(test)));
                             case 'closed':
-                                return (tests.closed.length === 0?
+                                return (tests.closed.length === 0 ?
                                     <Placeholder
-                                        icon={<Icon56HideOutline />}
+                                        icon={<Icon56HideOutline/>}
                                         header="Закрытых тестов нет"
-                                        action={<Button size='l' onClick={()=> createNewTest()}>Создать тест</Button>}
+                                        action={<Button size='l' onClick={() => createNewTest()}>Создать тест</Button>}
                                     >
                                         Не бойтесь, тут ваш тест никто не обидит!
                                     </Placeholder>
-                                    :tests.closed.map((test) => testCell(test)));
+                                    : tests.closed.map((test) => testCell(test)));
                             default:
                                 return null
                         }
-                })(): null}
+                })() : null}
             </Group>
             {sharedState.snackbar}
         </Panel>

@@ -18,19 +18,13 @@ import bridge from "@vkontakte/vk-bridge";
 import {Icon56NotePenOutline} from "@vkontakte/icons";
 
 const Home = ({id, sharedState}) => {
-    const deb = () => {
-        console.log(sharedState.urlParams)
-        console.log(sharedState.loginType)
-        // debugger;
-    }
-
     const [tests, setTests] = useState([])
 
 
     useEffect(() => {
         const fetchTests = async () => {
             if (Object.keys(sharedState.loginType).length !== 0) {
-                console.log("чекаем список тестов")
+                // console.log("чекаем список тестов")
                 getTestsList(sharedState.loginType.owner.id, sharedState.loginType.owner.isGroup, sharedState.loginType.user.id).then(res => setTests(res))
             }
         }
@@ -67,7 +61,7 @@ const Home = ({id, sharedState}) => {
                             onClick={() => {
                                 router.go("admin")
                             }}
-                        >Админка</Button>
+                        >Настройки</Button>
                         {/*//FIXME Заменить на просто кнопку с иконкой*/}
                         <Button style={{marginRight: '3px'}} size="m" mode="secondary"
                                 onClick={() => {
@@ -90,11 +84,11 @@ const Home = ({id, sharedState}) => {
             <Group header={<Header mode="secondary">Список тестов</Header>}>
                 {!sharedState.popout && tests.length === 0 ?
                     <Placeholder
-                    icon={<Icon56NotePenOutline />}
-                    header="Тестов нет"
-                >
-                    Похоже, что администратор не добавил ни одного теста...
-                </Placeholder>
+                        icon={<Icon56NotePenOutline/>}
+                        header="Тестов нет"
+                    >
+                        Похоже, что администратор не добавил ни одного теста...
+                    </Placeholder>
                     : null}
                 {/*FIXME Сделать для мобилок просто ContentСard*/}
                 <CardGrid size={'m'}>
