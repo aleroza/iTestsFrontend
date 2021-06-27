@@ -382,7 +382,6 @@ const QuestionsAndStuff = ({id, sharedState}) => {
                         }
                 })() : null}
             </Group>
-            {sharedState.snackbar}
         </Panel>
     )
 }

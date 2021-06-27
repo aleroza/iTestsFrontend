@@ -172,7 +172,6 @@ const Admin = ({id, sharedState}) => {
                         }
                 })() : null}
             </Group>
-            {sharedState.snackbar}
         </Panel>
     )
 }

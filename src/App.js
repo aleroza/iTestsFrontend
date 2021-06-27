@@ -378,7 +378,6 @@ function App() {
                                 <Separator/>
 
                             </FormLayout>
-                            {snackbar}
                         </Group>
                     )
                 })() : null}
@@ -395,7 +394,7 @@ function App() {
         activeTest, setActiveTest,
         activeModal, setActiveModal,
         setPopout,
-        snackbar, openSnackbar,
+        openSnackbar,
         declOfNum,
         newTest, setNewTest
     }
@@ -414,6 +413,7 @@ function App() {
                         {/*TODO Возможность прямого перехода на тест*/}
                         {/*TODO ВОЗМОЖНОСТЬ ПРЯМОГО ПЕРЕХОДА НА СПИСОК ТЕСТОВ КОНКРЕТНОГО ПОЛЬЗОВАТЕЛЯ*/}
                     </View>
+                    {snackbar}
                 </AppRoot>
             </AdaptivityProvider>
         </ConfigProvider>

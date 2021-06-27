@@ -105,7 +105,6 @@ const Home = ({id, sharedState}) => {
                     ))}
                 </CardGrid>
             </Group>
-            {sharedState.snackbar}
         </Panel>
     )
 }
