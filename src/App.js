@@ -37,12 +37,17 @@ import Admin from "./panels/Admin";
 import axios from "axios";
 import {createTest, updateTest} from "./backend-api";
 import QuestionsAndStuff from "./panels/QuestionsAndStuff";
+import Store from "./StoreContextProvider";
+
+export const declOfNum = (n, titles) => {
+    return titles[(n % 10 === 1 && n % 100 !== 11) ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2]
+}
 
 function App() {
+    // const [activeModal, setActiveModal] = useState(null)
     const [scheme, setScheme] = useState(null)
-    const [activePanel, setActivePanel] = useState('home')
+    // const [activePanel, setActivePanel] = useState('home')
     const [activeTest, setActiveTest] = useState(null)
-    const [activeModal, setActiveModal] = useState(null)
     const [popout, setPopout] = useState(<ScreenSpinner size='large'/>);
     //TODO нормальные попапы сделать, чтобы он пропадал только после получения ответа
     //const [nextpopout, nextsetPopout] = useReducer((bolval) => {if (bolval) return(<ScreenSpinner size='large'/>) else return null}, <ScreenSpinner size='large'/>);
@@ -138,9 +143,7 @@ function App() {
         }
     }, [])
 
-    const declOfNum = (n, titles) => {
-        return titles[(n % 10 === 1 && n % 100 !== 11) ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2]
-    }
+
 
     const openSnackbar = (text) => {
         if (snackbar) return null;
@@ -403,21 +406,24 @@ function App() {
         <ConfigProvider scheme={scheme}>
             <AdaptivityProvider>
                 <AppRoot>
-                    <View
-                        activePanel={activePanel} modal={modal} popout={popout}
-                    >
-                        <Home id='home' sharedState={sharedState}/>
-                        <Testing id='testing' sharedState={sharedState}/>
-                        <Admin id='admin' sharedState={sharedState}/>
-                        <QuestionsAndStuff id='questions_and_stuff' sharedState={sharedState}/>
-                        {/*TODO Возможность прямого перехода на тест*/}
-                        {/*TODO ВОЗМОЖНОСТЬ ПРЯМОГО ПЕРЕХОДА НА СПИСОК ТЕСТОВ КОНКРЕТНОГО ПОЛЬЗОВАТЕЛЯ*/}
-                    </View>
-                    {snackbar}
+                    <Store>
+                        <View
+                            activePanel={activePanel} modal={modal} popout={popout}
+                        >
+                            <Home id='home' sharedState={sharedState}/>
+                            <Testing id='testing' sharedState={sharedState}/>
+                            <Admin id='admin' sharedState={sharedState}/>
+                            <QuestionsAndStuff id='questions_and_stuff' sharedState={sharedState}/>
+                            {/*TODO Возможность прямого перехода на тест*/}
+                            {/*TODO ВОЗМОЖНОСТЬ ПРЯМОГО ПЕРЕХОДА НА СПИСОК ТЕСТОВ КОНКРЕТНОГО ПОЛЬЗОВАТЕЛЯ*/}
+                        </View>
+                        {snackbar}
+                    </Store>
                 </AppRoot>
             </AdaptivityProvider>
         </ConfigProvider>
     )
+
 }
 
 export default App;
